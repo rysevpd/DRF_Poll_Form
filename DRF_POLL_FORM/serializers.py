@@ -25,7 +25,7 @@ class QuestionSerializer(Serializer):
 
 class AnswerOptionSerializer(Serializer):
     id = serializers.IntegerField(required=False)
-    index = serializers.IntegerField(required=False)
+    uuid = serializers.IntegerField(required=False)
     text = serializers.CharField(max_length=150)
 
 

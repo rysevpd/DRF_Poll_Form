@@ -42,8 +42,8 @@ class AdminPollById(AdminAPIView):
             result['questions'] = []
             for question in poll.question_set.all():
                 questionDict = QuestionSerializer(question).data
-                if question.hasOptionType:
-                    questionDict['answeroptions'] = OptionSerializer(question.option_set.all(), many=True).data
+                if question.type_choices:
+                    questionDict['answeroptions'] = OptionSerializer(question.answeroption_set.all(), many=True).data
                 result['questions'].append(questionDict)
 
             return Response(result)
@@ -92,7 +92,7 @@ class AdminQuestions(AdminAPIView):
             qs = QuestionSerializer(data=request.data)
             qs.is_valid(raise_exception=True)
             pd = dict(qs.validated_data)
-            pd['poll'] = poll
+            pd['question'] = poll
             newQuestion = Question(**pd)
 
             requireOptions = newQuestion.type_choices
@@ -100,16 +100,16 @@ class AdminQuestions(AdminAPIView):
             if requireOptions:
                 if not 'answeroptions' in request.data:
                     raise Exception('options are missing')
-                if type(request.data['answeroptions']) != list or len(request.data['options']) < 2:
+                if type(request.data['answeroptions']) != list or len(request.data['answeroptions']) < 2:
                     raise Exception('Invalid options')
 
-                index = 1
+                uuid = 1
                 for optionText in request.data['answeroptions']:
                     newOptionList.append(AnswerOption(
                         text=optionText,
-                        index=index
+                        uuid=uuid
                     ))
-                    index += 1
+                    uuid += 1
 
             newQuestion.save()
             if requireOptions:
@@ -134,8 +134,8 @@ class AdminQuestionById(AdminAPIView):
         try:
             question = Question.objects.get(id=questionId)
             result = QuestionSerializer(question).data
-            if question.hasOptionType:
-                result['answeroptions'] = OptionSerializer(question.option_set.all(), many=True)
+            if question.type_choices:
+                result['answeroptions'] = OptionSerializer(question.answeroption_set.all(), many=True)
             return Response(result)
 
         except Question.DoesNotExist:
@@ -165,11 +165,11 @@ class AdminQuestionById(AdminAPIView):
                 type_question(d['type'])
                 nextQuestion.type = d['type']
 
-            if prevQuestion.hasOptionType and not nextQuestion.hasOptionType:
+            if prevQuestion.type_choices and not nextQuestion.type_choices:
                 deleteExistingOptions = True
-            if not prevQuestion.hasOptionType and nextQuestion.hasOptionType:
+            if not prevQuestion.type_choices and nextQuestion.type_choices:
                 requireNewOptions = True
-            if prevQuestion.hasOptionType and nextQuestion.hasOptionType and 'answeroptions' in d:
+            if prevQuestion.type_choices and nextQuestion.type_choices and 'answeroptions' in d:
                 deleteExistingOptions = requireNewOptions = True
 
             if requireNewOptions:
@@ -182,16 +182,16 @@ class AdminQuestionById(AdminAPIView):
                 AnswerOption.objects.filter(question=nextQuestion).delete()
 
             if requireNewOptions:
-                index = 1
+                uuid = 1
                 for optionText in d['answeroptions']:
-                    AnswerOption(text=optionText, index=index, question=nextQuestion).save()
-                    index += 1
+                    AnswerOption(text=optionText, uuid=uuid, question=nextQuestion).save()
+                    uuid += 1
 
             nextQuestion.save()
 
             result = QuestionSerializer(nextQuestion).data
-            if nextQuestion.hasOptionType:
-                result['answeroptions'] = OptionSerializer(nextQuestion.option_set.all(), many=True).data
+            if nextQuestion.type_choices:
+                result['answeroptions'] = OptionSerializer(nextQuestion.answeroption_set.all(), many=True).data
 
             return Response(result)
 

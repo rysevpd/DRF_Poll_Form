@@ -3,20 +3,20 @@ from django.db.models import Model
 from django.core.exceptions import ValidationError
 
 
-class Poll(Model):
-    name_test = models.CharField(max_length=50)
-    about_test = models.CharField(max_length=225)
-    date_start = models.DateField()
-    date_finish = models.DateField()
-
-
 def type_question(val):
     types = ['text', 'one_answer', 'multiple_answer']
     if val not in types:
         raise ValidationError('Данного типа не существует')
 
 
-type_choice = ['CHOICE', 'MULTIPLE_CHOICE']
+type_choice = ['one_answer', 'multiple_answer']
+
+
+class Poll(Model):
+    name_test = models.CharField(max_length=50)
+    about_test = models.CharField(max_length=225)
+    date_start = models.DateField()
+    date_finish = models.DateField()
 
 
 class Question(Model):
